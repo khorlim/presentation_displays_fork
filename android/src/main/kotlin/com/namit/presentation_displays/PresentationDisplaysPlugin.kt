@@ -19,7 +19,6 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.PluginRegistry
 import org.json.JSONObject
 
 /** PresentationDisplaysPlugin */
@@ -49,20 +48,6 @@ class PresentationDisplaysPlugin : FlutterPlugin, ActivityAware, MethodChannel.M
     private const val viewTypeId = "presentation_displays_plugin"
     private const val viewTypeEventsId = "presentation_displays_plugin_events"
     private var displayManager: DisplayManager? = null
-
-    /** @hide */
-    @Suppress("unused", "DEPRECATION")
-    @JvmStatic
-    fun registerWith(registrar: PluginRegistry.Registrar) {
-      val channel = MethodChannel(registrar.messenger(), viewTypeId)
-      channel.setMethodCallHandler(PresentationDisplaysPlugin())
-
-      val eventChannel = EventChannel(registrar.messenger(), viewTypeEventsId)
-      displayManager =
-          registrar.activity()!!.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-      val displayConnectedStreamHandler = DisplayConnectedStreamHandler(displayManager)
-      eventChannel.setStreamHandler(displayConnectedStreamHandler)
-    }
   }
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -90,7 +75,7 @@ class PresentationDisplaysPlugin : FlutterPlugin, ActivityAware, MethodChannel.M
             flutterEngine?.let {
               flutterEngineChannel =
                   MethodChannel(it.dartExecutor.binaryMessenger, "${viewTypeId}_engine")
-              presentation = context?.let { it1 -> PresentationDisplay(it1, tag, display) }
+              presentation = context?.let { ctx -> PresentationDisplay(ctx, tag, display) }
               Log.i(TAG, "presentation: $presentation")
               presentation?.show()
 
@@ -106,9 +91,6 @@ class PresentationDisplaysPlugin : FlutterPlugin, ActivityAware, MethodChannel.M
       }
       "hidePresentation" -> {
         try {
-          val obj = JSONObject(call.arguments as String)
-          Log.i(TAG, "Channel: method: ${call.method} | displayId: ${obj.getInt("displayId")}")
-
           presentation?.dismiss()
           presentation = null
           result.success(true)
@@ -156,16 +138,23 @@ class PresentationDisplaysPlugin : FlutterPlugin, ActivityAware, MethodChannel.M
     return FlutterEngineCache.getInstance().get(tag)
   }
 
-  override fun onDetachedFromActivity() {}
-
-  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {}
-
+  // ActivityAware lifecycle
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     this.context = binding.activity
     displayManager = context?.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
   }
 
-  override fun onDetachedFromActivityForConfigChanges() {}
+  override fun onDetachedFromActivity() {
+    context = null
+  }
+
+  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+    onAttachedToActivity(binding)
+  }
+
+  override fun onDetachedFromActivityForConfigChanges() {
+    context = null
+  }
 }
 
 class DisplayConnectedStreamHandler(private var displayManager: DisplayManager?) :

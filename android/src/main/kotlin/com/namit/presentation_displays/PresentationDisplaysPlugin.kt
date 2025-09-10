@@ -119,6 +119,28 @@ class PresentationDisplaysPlugin : FlutterPlugin, ActivityAware, MethodChannel.M
           result.success(false)
         }
       }
+      "closePresentation" -> {
+        try {
+          val obj = JSONObject(call.arguments as String)
+          val tag: String = obj.getString("routerName")
+          
+          // Dismiss presentation if active
+          presentation?.dismiss()
+          presentation = null
+          flutterEngineChannel = null
+          
+          // Remove and destroy FlutterEngine from cache
+          val flutterEngine = FlutterEngineCache.getInstance().get(tag)
+          if (flutterEngine != null) {
+            FlutterEngineCache.getInstance().remove(tag)
+            flutterEngine.destroy()
+          }
+          
+          result.success(true)
+        } catch (e: Exception) {
+          result.error(call.method, e.message, null)
+        }
+      }
     }
   }
 

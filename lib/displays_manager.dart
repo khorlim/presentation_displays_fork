@@ -11,6 +11,7 @@ const _listDisplay = "listDisplay";
 const _showPresentation = "showPresentation";
 const _hidePresentation = "hidePresentation";
 const _transferDataToPresentation = "transferDataToPresentation";
+const _closePresentation = "closePresentation";
 
 /// Display category: secondary display.
 /// <p>
@@ -195,6 +196,22 @@ class DisplayManager {
   Future<bool?>? transferDataToPresentation(dynamic arguments) async {
     return await _displayMethodChannel?.invokeMethod<bool?>(
         _transferDataToPresentation, arguments);
+  }
+
+  /// Closes and cleans up the FlutterEngine for the specified presentation
+  /// <p>
+  /// This properly disposes of the FlutterEngine and removes it from cache,
+  /// preventing memory leaks. Call this when you no longer need the secondary display.
+  /// [routerName] The router name used when creating the presentation
+  /// </p>
+  ///
+  /// return [Future<bool>] the value to determine whether the cleanup was successful
+  Future<bool?>? closePresentation({required String routerName}) async {
+    return await _displayMethodChannel?.invokeMethod<bool?>(
+        _closePresentation,
+        "{"
+        "\"routerName\": \"$routerName\""
+        "}");
   }
 
   /// Subscribe to the stream to get notifications about connected / disconnected displays

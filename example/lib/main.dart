@@ -122,6 +122,7 @@ class _DisplayManagerScreenState extends State<DisplayManagerScreen> {
               _showPresentation(),
               _hidePresentation(),
               _transferData(),
+              _closePresentation(),
               _getDisplayeById(),
               _getDisplayByIndex(),
             ],
@@ -248,6 +249,22 @@ class _DisplayManagerScreenState extends State<DisplayManagerScreen> {
             onPressed: () async {
               String data = _dataToTransferController.text;
               await displayManager.transferDataToPresentation(data);
+            }),
+        const Divider(),
+      ],
+    );
+  }
+
+  Widget _closePresentation() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Button(
+            title: "Close Presentation",
+            onPressed: () async {
+              await displayManager.closePresentation(
+                  routerName: "presentation");
             }),
         const Divider(),
       ],
